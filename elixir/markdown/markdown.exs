@@ -11,6 +11,11 @@ defmodule Markdown do
     "<h1>Header!</h1><ul><li><em>Bold Item</em></li><li><i>Italic Item</i></li></ul>"
   """
   @spec parse(String.t()) :: String.t()
+
+  @doc """
+    It's better use pipe operator, it it now much easier to follow
+  """
+
   def parse(m) do
 
     m
@@ -26,7 +31,7 @@ defmodule Markdown do
     case String.first(t) do
       "#" -> enclose_with_header_tag(parse_header_md_level(t))
       "*" -> parse_list_md_level(t)
-      _ -> enclose_with_paragraph_tag(String.split(t))
+      _ -> enclose_with_paragraph_tag(t)
     end
 
   end
@@ -43,7 +48,7 @@ defmodule Markdown do
 
   @doc "process lists"
   defp parse_list_md_level(l) do
-    t = String.split(String.trim_leading(l, "* "))
+    t = String.trim_leading(l, "* ")
     "<li>#{join_words_with_tags(t)}</li>"
   end
 
@@ -53,36 +58,14 @@ defmodule Markdown do
 
   defp join_words_with_tags(t) do
 
-    t
-    |> Enum.map(&replace_md_with_tag(&1))
-    |> Enum.join(" ")
+    t = Regex.replace(~r/__(.+)__/, t, "<strong>\\1</strong>")
+    Regex.replace(~r/_(.+)_/, t, "<em>\\1</em>")
 
-  end
-
-  defp replace_md_with_tag(w) do
-    replace_suffix_md(replace_prefix_md(w))
-  end
-
-  defp replace_prefix_md(w) do
-    cond do
-      w =~ ~r/^#{"__"}{1}/ -> String.replace(w, ~r/^#{"__"}{1}/, "<strong>", global: false)
-      w =~ ~r/^[#{"_"}{1}][^#{"_"}+]/ -> String.replace(w, ~r/_/, "<em>", global: false)
-      true -> w
-    end
-  end
-
-  defp replace_suffix_md(w) do
-    cond do
-      w =~ ~r/#{"__"}{1}$/ -> String.replace(w, ~r/#{"__"}{1}$/, "</strong>")
-      w =~ ~r/[^#{"_"}{1}]/ -> String.replace(w, ~r/_/, "</em>")
-      true -> w
-    end
   end
 
   defp patch(l) do
     l
     |> String.replace("<li>", "<ul><li>", global: false)
-    |> String.replace_suffix("</li>","</li></ul>"
-    )
+    |> String.replace_suffix("</li>","</li></ul>")
   end
 end
